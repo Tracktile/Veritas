@@ -1,28 +1,8 @@
 <p  align="center">
-	<img  src="https://i.imgur.com/ANnBTvB.png"  />
-</p>
-<p  align="center">A light weight and code first API framework with automatic type inference and OpenAPI schema generation.</r>
-
-## :construction: Disclaimer
-
-This is still very much a work in progress and at this time makes no promises about functionality or API stability.
-
-## Features
-
-- Define your Request, Response, URL Parameters, and Query Parameters along with your endpoint.
-- Enjoy complete type safety based on your router definitions.
-- Automatically validate every request and repsonse against your router definitions.
-- Automatically generate a customized OpenAPI schema for your API as YAML or JSON.
-
-## Usage/Examples
-
-    <p  align="center">
-
-<img  src="https://i.imgur.com/ANnBTvB.png"  />
-
+  <img  src="https://i.imgur.com/ANnBTvB.png"  />
 </p>
 
-<p  align="center">A light weight and code first API framework with automatic type inference and OpenAPI schema generation.</r>
+<p  align="center">A light weight and code first API framework with automatic type inference and OpenAPI schema generation.</p>
 
 ## :construction: Disclaimer
 
@@ -34,7 +14,7 @@ This is still very much a work in progress and at this time makes no promises ab
 
 - Enjoy complete type safety based on your router definitions.
 
-- Automatically validate every request and repsonse against your router definitions.
+- Automatically validate every request and response against your router definitions.
 
 - Automatically generate a customized OpenAPI schema for your API as YAML or JSON.
 
@@ -106,20 +86,6 @@ MyService.start(8080);
 // COMING SOON: OR run your service inside a lambda
 // exports.handler = MyService.lambda();
 ```
-
-## Coming Soon
-
-- [ ] Support adding shared types to the OpenAPI specifications `components` section and use `$ref` to reference them from the path schemas section.
-
-- [ ] Improved error messaging on request, response, url params, and query params validation.
-
-- [ ] Support for serving openapi json schema directly from API (/\_schema)
-
-- [ ] Support for binding to port or running in a Lambda
-
-## Authors
-
-- [@jarredkenny](https://www.github.com/jarredkenny)
 
 ## Coming Soon
 
