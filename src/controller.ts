@@ -1,13 +1,9 @@
 import { TypeCompiler, ValueError } from "@sinclair/typebox/compiler";
-import { Type, TSchema, Static } from "@sinclair/typebox";
+import { Type, TSchema } from "@sinclair/typebox";
 import Router from "@koa/router";
-import Koa, {
-  ParameterizedContext,
-  DefaultContext,
-  DefaultState,
-  Middleware,
-  Next,
-} from "koa";
+import { DefaultState, Middleware, Next } from "koa";
+
+import { ServiceContext, OperationContext, Operation } from "./types";
 
 export class BadRequestError extends Error {
   errors: Record<string, unknown>[];
@@ -18,74 +14,21 @@ export class BadRequestError extends Error {
   }
 }
 
-export type OperationContext<
-  TParams extends TSchema,
-  TQuery extends TSchema,
-  TReq extends TSchema,
-  TRes extends TSchema
-> = {
-  name: string;
-  method: "get" | "post" | "put" | "delete";
-  summary: string;
-  description: string;
-  path: string;
-  params: TParams;
-  auth: boolean;
-  query: TQuery;
-  req: TReq;
-  res: TRes;
-  middleware: Middleware<DefaultState, TracktileServiceContext>[];
-  tags: string[];
-};
-
-export type Operation<
-  TParams extends TSchema,
-  TQuery extends TSchema,
-  TReq extends TSchema,
-  TRes extends TSchema
-> = Partial<OperationContext<TParams, TQuery, TRes, TReq>> &
-  Pick<
-    OperationContext<TParams, TQuery, TReq, TRes>,
-    "name" | "method" | "path"
-  >;
-
-export type TracktileServiceContext<
-  T extends OperationContext<
-    TSchema,
-    TSchema,
-    TSchema,
-    TSchema
-  > = OperationContext<TSchema, TSchema, TSchema, TSchema>
-> = ParameterizedContext<DefaultState, DefaultContext, Static<T["res"]>> & {
-  serviceName: string;
-  tenantId: string;
-  validator: Middleware;
-  body: Static<T["res"]>;
-  query: Static<T["query"]>;
-  params: Static<T["params"]>;
-  request: ParameterizedContext["request"] & { body: Static<T["req"]> };
-};
-
-interface TracktileControllerOptions {
+interface ControllerOptions {
   prefix?: string;
   tags?: string[];
   auth?: boolean;
-  middleware?: Middleware<DefaultState, TracktileServiceContext>[];
+  middleware?: Middleware<DefaultState, ServiceContext>[];
 }
 
-export class TracktileController {
+export class Controller {
   prefix: string;
   tags: string[];
   auth: boolean;
-  preMatchedRouteMiddleware: Middleware<
-    DefaultState,
-    TracktileServiceContext
-  >[];
+  preMatchedRouteMiddleware: Middleware<DefaultState, ServiceContext>[];
   router: Router<
     DefaultState,
-    TracktileServiceContext<
-      OperationContext<TSchema, TSchema, TSchema, TSchema>
-    >
+    ServiceContext<OperationContext<TSchema, TSchema, TSchema, TSchema>>
   >;
   operations: OperationContext<TSchema, TSchema, TSchema, TSchema>[];
 
@@ -94,12 +37,10 @@ export class TracktileController {
     middleware = [],
     tags = [],
     auth = false,
-  }: TracktileControllerOptions = {}) {
+  }: ControllerOptions = {}) {
     this.router = new Router<
       DefaultState,
-      TracktileServiceContext<
-        OperationContext<TSchema, TSchema, TSchema, TSchema>
-      >
+      ServiceContext<OperationContext<TSchema, TSchema, TSchema, TSchema>>
     >({ prefix });
     this.preMatchedRouteMiddleware = middleware;
     this.tags = tags;
@@ -144,8 +85,8 @@ export class TracktileController {
     RouteContext extends OperationContext<TSchema, TSchema, TSchema, TSchema>
   >(
     context: Partial<RouteContext>
-  ): Middleware<DefaultState, TracktileServiceContext<RouteContext>> {
-    return async (ctx: TracktileServiceContext<RouteContext>, next: Next) => {
+  ): Middleware<DefaultState, ServiceContext<RouteContext>> {
+    return async (ctx: ServiceContext<RouteContext>, next: Next) => {
       let errors: ValueError[] = [];
       if (context.query) {
         errors = [
@@ -192,7 +133,7 @@ export class TracktileController {
     context: T,
     path: string | RegExp,
     methods: string[],
-    routeMiddleware: Middleware<DefaultState, TracktileServiceContext<T>>[],
+    routeMiddleware: Middleware<DefaultState, ServiceContext<T>>[],
     options?: Router.LayerOptions
   ): Router.Layer {
     const passedMiddleware = Array.isArray(routeMiddleware)
@@ -205,7 +146,7 @@ export class TracktileController {
           this.validateAgainstContext(context),
           ...(this.preMatchedRouteMiddleware as Middleware<
             DefaultState,
-            TracktileServiceContext<T>
+            ServiceContext<T>
           >[]),
           ...passedMiddleware.slice(passedMiddleware.length - 1),
         ];
@@ -220,9 +161,7 @@ export class TracktileController {
   >(
     definition: Operation<TParams, TQuery, TReq, TRes>,
     handler: (
-      ctx: TracktileServiceContext<
-        OperationContext<TParams, TQuery, TReq, TRes>
-      >,
+      ctx: ServiceContext<OperationContext<TParams, TQuery, TReq, TRes>>,
       next: Next
     ) => void
   ) {
@@ -244,10 +183,7 @@ export class TracktileController {
   >(
     context: OperationContext<TParams, TQuery, TReq, TRes>,
     path: string,
-    ...middleware: Middleware<
-      DefaultState,
-      TracktileServiceContext<typeof context>
-    >[]
+    ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
   ) {
     return this.register<typeof context>(context, path, ["GET"], middleware);
   }
@@ -260,10 +196,7 @@ export class TracktileController {
   >(
     context: OperationContext<TParams, TQuery, TReq, TRes>,
     path: string,
-    ...middleware: Middleware<
-      DefaultState,
-      TracktileServiceContext<typeof context>
-    >[]
+    ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
   ) {
     return this.register(context, path, ["POST"], middleware);
   }
@@ -276,10 +209,7 @@ export class TracktileController {
   >(
     context: OperationContext<TParams, TQuery, TReq, TRes>,
     path: string,
-    ...middleware: Middleware<
-      DefaultState,
-      TracktileServiceContext<typeof context>
-    >[]
+    ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
   ) {
     return this.register<typeof context>(context, path, ["PUT"], middleware);
   }
@@ -292,66 +222,8 @@ export class TracktileController {
   >(
     context: OperationContext<TParams, TQuery, TReq, TRes>,
     path: string,
-    ...middleware: Middleware<
-      DefaultState,
-      TracktileServiceContext<typeof context>
-    >[]
+    ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
   ) {
     return this.register<typeof context>(context, path, ["DELETE"], middleware);
   }
 }
-
-interface TracktileServiceOptions {
-  name: string;
-  apiSpecPath?: string;
-  controllers?: TracktileController[];
-  middlewares?: Middleware[];
-}
-
-export type TracktileService = Koa<
-  DefaultState,
-  TracktileServiceContext<OperationContext<TSchema, TSchema, TSchema, TSchema>>
-> & {
-  controllers: TracktileController[];
-};
-
-export const TracktileService = ({
-  name,
-  controllers = [],
-  middlewares = [],
-}: TracktileServiceOptions): TracktileService => {
-  const app: TracktileService = Object.assign(
-    new Koa<
-      DefaultState,
-      TracktileServiceContext<
-        OperationContext<TSchema, TSchema, TSchema, TSchema>
-      >
-    >(),
-    { controllers: [] }
-  );
-
-  app.use(async (ctx: ParameterizedContext, next: Next) => {
-    ctx.serviceName = name;
-    return next();
-  });
-
-  middlewares.forEach((middleware) => app.use(middleware));
-
-  const base = new Router<
-    DefaultState,
-    TracktileServiceContext<
-      OperationContext<TSchema, TSchema, TSchema, TSchema>
-    >
-  >();
-
-  controllers.forEach((controller) => {
-    app.controllers.push(controller);
-    base.use(controller.routes());
-    base.use(controller.allowedMethods());
-  });
-
-  app.use(base.routes());
-  app.use(base.allowedMethods());
-
-  return app;
-};
