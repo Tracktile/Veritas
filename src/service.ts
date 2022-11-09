@@ -14,6 +14,8 @@ interface ServiceOptions {
   middlewares?: Middleware[];
 }
 
+export interface ServiceValidationOptions {}
+
 export class Service extends Koa<DefaultState, ServiceContext> {
   title: string;
   description: string;
