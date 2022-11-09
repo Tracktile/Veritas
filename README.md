@@ -6,7 +6,15 @@
 
 ## :construction: Disclaimer
 
-This is still very much a work in progress and at this time makes no promises about functionality or API stability. In fact, this is so alpha no npm package has been published.
+This is still very much a work in progress and at this time makes no promises about functionality or API stability.
+
+## Installation
+
+```sh
+  npm install @tracktile/veritas
+  # OR
+  yarn add @tracktile/veritas
+```
 
 ## Features
 
@@ -18,7 +26,7 @@ This is still very much a work in progress and at this time makes no promises ab
 
 - Automatically generate a customized OpenAPI schema for your API as YAML or JSON.
 
-## Usage/Examples
+## Usage
 
 ```typescript
 import { Service, Controller, Type, generate } from "@tracktile/veritas";

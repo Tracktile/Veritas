@@ -1,4 +1,4 @@
-import { Service, Controller, Type, generate } from "../src";
+import { Service, Controller, Type, generate } from "@tracktile/veritas";
 
 const users = new Controller({
   prefix: "/users",
@@ -60,5 +60,5 @@ console.log(generate(MyService));
 // OR start and bind your service to a port
 MyService.start(8080);
 
-// OR run your service inside a lambda
-exports.handler = MyService.lambda();
+// COMING SOON: OR run your service inside a lambda
+// exports.handler = MyService.lambda();
