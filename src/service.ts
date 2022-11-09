@@ -1,29 +1,50 @@
-import { TSchema } from "@sinclair/typebox";
 import Koa, { DefaultState, Middleware } from "koa";
 import Router from "@koa/router";
+import { TSchema } from "@sinclair/typebox";
 
-import { ServiceContext, OperationContext } from "./types";
 import { Controller } from "./controller";
+import { ServiceContext, OperationContext } from "./types";
 
-interface ServiceOptions {
+interface ServiceOptions<TExtend> {
   title?: string;
   description?: string;
   tags?: string[];
   prefix?: string;
-  controllers?: Controller[];
-  middlewares?: Middleware[];
+  controllers?: Controller<TExtend>[];
+  middlewares?: Middleware<
+    DefaultState,
+    ServiceContext<
+      OperationContext<TSchema, TSchema, TSchema, TSchema>,
+      TExtend
+    >
+  >[];
 }
 
 export interface ServiceValidationOptions {}
 
-export class Service extends Koa<DefaultState, ServiceContext> {
+export class Service<TExtend = {}> extends Koa<
+  DefaultState,
+  ServiceContext<OperationContext<TSchema, TSchema, TSchema, TSchema>, TExtend>
+> {
   title: string;
   description: string;
   tags: string[];
   prefix: string;
-  controllers: Controller[];
-  middleware: Middleware<DefaultState, ServiceContext>[];
-  base: Router<DefaultState, ServiceContext>;
+  controllers: Controller<TExtend>[];
+  middleware: Middleware<
+    DefaultState,
+    ServiceContext<
+      OperationContext<TSchema, TSchema, TSchema, TSchema>,
+      TExtend
+    >
+  >[];
+  base: Router<
+    DefaultState,
+    ServiceContext<
+      OperationContext<TSchema, TSchema, TSchema, TSchema>,
+      TExtend
+    >
+  >;
 
   constructor({
     title = "",
@@ -32,11 +53,14 @@ export class Service extends Koa<DefaultState, ServiceContext> {
     tags = [],
     controllers = [],
     middlewares = [],
-  }: ServiceOptions) {
+  }: ServiceOptions<TExtend>) {
     super();
     this.base = new Router<
       DefaultState,
-      ServiceContext<OperationContext<TSchema, TSchema, TSchema, TSchema>>
+      ServiceContext<
+        OperationContext<TSchema, TSchema, TSchema, TSchema>,
+        TExtend
+      >
     >();
     this.title = title;
     this.description = description;
@@ -49,7 +73,7 @@ export class Service extends Koa<DefaultState, ServiceContext> {
     this.use(this.base.allowedMethods());
   }
 
-  private register(controller: Controller) {
+  private register(controller: Controller<TExtend>) {
     this.base.use(controller.routes());
     this.base.use(controller.allowedMethods());
     this.controllers.push(controller);

@@ -21,14 +21,17 @@ interface ControllerOptions {
   middleware?: Middleware<DefaultState, ServiceContext>[];
 }
 
-export class Controller {
+export class Controller<TExtend = {}> {
   prefix: string;
   tags: string[];
   auth: boolean;
   preMatchedRouteMiddleware: Middleware<DefaultState, ServiceContext>[];
   router: Router<
     DefaultState,
-    ServiceContext<OperationContext<TSchema, TSchema, TSchema, TSchema>>
+    ServiceContext<
+      OperationContext<TSchema, TSchema, TSchema, TSchema>,
+      TExtend
+    >
   >;
   operations: OperationContext<TSchema, TSchema, TSchema, TSchema>[];
 
@@ -40,7 +43,10 @@ export class Controller {
   }: ControllerOptions = {}) {
     this.router = new Router<
       DefaultState,
-      ServiceContext<OperationContext<TSchema, TSchema, TSchema, TSchema>>
+      ServiceContext<
+        OperationContext<TSchema, TSchema, TSchema, TSchema>,
+        TExtend
+      >
     >({ prefix });
     this.preMatchedRouteMiddleware = middleware;
     this.tags = tags;
@@ -133,7 +139,7 @@ export class Controller {
     context: T,
     path: string | RegExp,
     methods: string[],
-    routeMiddleware: Middleware<DefaultState, ServiceContext<T>>[],
+    routeMiddleware: Middleware<DefaultState, ServiceContext<T, TExtend>>[],
     options?: Router.LayerOptions
   ): Router.Layer {
     const passedMiddleware = Array.isArray(routeMiddleware)
@@ -161,7 +167,10 @@ export class Controller {
   >(
     definition: Operation<TParams, TQuery, TReq, TRes>,
     handler: (
-      ctx: ServiceContext<OperationContext<TParams, TQuery, TReq, TRes>>,
+      ctx: ServiceContext<
+        OperationContext<TParams, TQuery, TReq, TRes>,
+        TExtend
+      >,
       next: Next
     ) => void
   ) {

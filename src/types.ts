@@ -12,13 +12,15 @@ export type ServiceContext<
     TSchema,
     TSchema,
     TSchema
-  > = OperationContext<TSchema, TSchema, TSchema, TSchema>
-> = ParameterizedContext<DefaultState, DefaultContext, Static<T["res"]>> & {
-  body: Static<T["res"]>;
-  query: Static<T["query"]>;
-  params: Static<T["params"]>;
-  request: ParameterizedContext["request"] & { body: Static<T["req"]> };
-};
+  > = OperationContext<TSchema, TSchema, TSchema, TSchema>,
+  Extension = {}
+> = ParameterizedContext<DefaultState, DefaultContext, Static<T["res"]>> &
+  Extension & {
+    body: Static<T["res"]>;
+    query: Static<T["query"]>;
+    params: Static<T["params"]>;
+    request: ParameterizedContext["request"] & { body: Static<T["req"]> };
+  };
 
 export type OperationContext<
   TParams extends TSchema,
