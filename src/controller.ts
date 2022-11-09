@@ -142,7 +142,10 @@ export class Controller<TExtend = {}> {
             errors as unknown as Record<string, unknown>[]
           );
         }
-        console.warn("ResponseValidationError", errors);
+        console.warn(
+          "ResponseValidationError",
+          JSON.stringify(errors, null, "  ")
+        );
       }
     };
   }
@@ -195,56 +198,4 @@ export class Controller<TExtend = {}> {
       [...operation.middleware, handler]
     );
   }
-
-  // get<
-  //   TParams extends TSchema,
-  //   TQuery extends TSchema,
-  //   TReq extends TSchema,
-  //   TRes extends TSchema
-  // >(
-  //   context: OperationContext<TParams, TQuery, TReq, TRes>,
-  //   path: string,
-  //   ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
-  // ) {
-  //   return this.register<typeof context>(context, path, ["GET"], middleware);
-  // }
-
-  // post<
-  //   TParams extends TSchema,
-  //   TQuery extends TSchema,
-  //   TReq extends TSchema,
-  //   TRes extends TSchema
-  // >(
-  //   context: OperationContext<TParams, TQuery, TReq, TRes>,
-  //   path: string,
-  //   ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
-  // ) {
-  //   return this.register(context, path, ["POST"], middleware);
-  // }
-
-  // put<
-  //   TParams extends TSchema,
-  //   TQuery extends TSchema,
-  //   TReq extends TSchema,
-  //   TRes extends TSchema
-  // >(
-  //   context: OperationContext<TParams, TQuery, TReq, TRes>,
-  //   path: string,
-  //   ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
-  // ) {
-  //   return this.register<typeof context>(context, path, ["PUT"], middleware);
-  // }
-
-  // delete<
-  //   TParams extends TSchema,
-  //   TQuery extends TSchema,
-  //   TReq extends TSchema,
-  //   TRes extends TSchema
-  // >(
-  //   context: OperationContext<TParams, TQuery, TReq, TRes>,
-  //   path: string,
-  //   ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
-  // ) {
-  //   return this.register<typeof context>(context, path, ["DELETE"], middleware);
-  // }
 }
