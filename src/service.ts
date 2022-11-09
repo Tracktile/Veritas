@@ -70,6 +70,7 @@ export class Service<TExtend = {}> extends Koa<
     this.middleware = middlewares;
     controllers.forEach((controller) => {
       controller.setValidatorWarnOnly(validatorWarnOnly);
+      controller.prependPrefix(this.prefix);
       this.register(controller);
     });
     this.use(this.base.routes());

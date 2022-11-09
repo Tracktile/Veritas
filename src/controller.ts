@@ -73,6 +73,10 @@ export class Controller<TExtend = {}> {
     this.validatorWarnOnly = state;
   }
 
+  prependPrefix(prefix: string) {
+    this.prefix = `${prefix}${this.prefix}`;
+  }
+
   private createOperation<
     TParams extends TSchema,
     TQuery extends TSchema,
