@@ -34,6 +34,7 @@ export class Controller<TExtend = {}> {
     >
   >;
   operations: OperationContext<TSchema, TSchema, TSchema, TSchema>[];
+  validatorWarnOnly: boolean;
 
   constructor({
     prefix = "",
@@ -53,6 +54,7 @@ export class Controller<TExtend = {}> {
     this.auth = auth;
     this.prefix = prefix;
     this.operations = [];
+    this.validatorWarnOnly = false;
   }
 
   routes() {
@@ -65,6 +67,10 @@ export class Controller<TExtend = {}> {
 
   getOperations() {
     return this.operations;
+  }
+
+  setValidatorWarnOnly(state: boolean) {
+    this.validatorWarnOnly = state;
   }
 
   private createOperation<
@@ -114,10 +120,13 @@ export class Controller<TExtend = {}> {
       }
 
       if (errors.length > 0) {
-        throw new BadRequestError(
-          "RequestValidationError",
-          errors as unknown as Record<string, unknown>[]
-        );
+        if (!this.validatorWarnOnly) {
+          throw new BadRequestError(
+            "RequestValidationError",
+            errors as unknown as Record<string, unknown>[]
+          );
+        }
+        console.warn("RequestValidationError", errors);
       }
 
       await next();
@@ -127,10 +136,13 @@ export class Controller<TExtend = {}> {
       }
 
       if (errors.length > 0) {
-        throw new BadRequestError(
-          "ResponseValidationError",
-          errors as unknown as Record<string, unknown>[]
-        );
+        if (!this.validatorWarnOnly) {
+          throw new BadRequestError(
+            "ResponseValidationError",
+            errors as unknown as Record<string, unknown>[]
+          );
+        }
+        console.warn("ResponseValidationError", errors);
       }
     };
   }

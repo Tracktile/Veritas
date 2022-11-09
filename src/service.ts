@@ -18,9 +18,8 @@ interface ServiceOptions<TExtend> {
       TExtend
     >
   >[];
+  validatorWarnOnly?: boolean;
 }
-
-export interface ServiceValidationOptions {}
 
 export class Service<TExtend = {}> extends Koa<
   DefaultState,
@@ -53,6 +52,7 @@ export class Service<TExtend = {}> extends Koa<
     tags = [],
     controllers = [],
     middlewares = [],
+    validatorWarnOnly = false,
   }: ServiceOptions<TExtend>) {
     super();
     this.base = new Router<
@@ -68,7 +68,10 @@ export class Service<TExtend = {}> extends Koa<
     this.prefix = prefix;
     this.controllers = controllers;
     this.middleware = middlewares;
-    controllers.forEach(this.register.bind(this));
+    controllers.forEach((controller) => {
+      controller.setValidatorWarnOnly(validatorWarnOnly);
+      this.register(controller);
+    });
     this.use(this.base.routes());
     this.use(this.base.allowedMethods());
   }
