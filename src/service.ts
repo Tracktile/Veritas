@@ -20,7 +20,7 @@ export class Service extends Koa<DefaultState, ServiceContext> {
   tags: string[];
   prefix: string;
   controllers: Controller[];
-  middleware: Middleware[];
+  middleware: Middleware<DefaultState, ServiceContext>[];
   base: Router<DefaultState, ServiceContext>;
 
   constructor({

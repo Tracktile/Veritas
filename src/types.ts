@@ -45,7 +45,7 @@ export type Operation<
   TQuery extends TSchema,
   TReq extends TSchema,
   TRes extends TSchema
-> = Partial<OperationContext<TParams, TQuery, TRes, TReq>> &
+> = Partial<OperationContext<TParams, TQuery, TReq, TRes>> &
   Pick<
     OperationContext<TParams, TQuery, TReq, TRes>,
     "name" | "method" | "path"

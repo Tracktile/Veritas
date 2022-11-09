@@ -175,55 +175,55 @@ export class Controller {
     );
   }
 
-  get<
-    TParams extends TSchema,
-    TQuery extends TSchema,
-    TReq extends TSchema,
-    TRes extends TSchema
-  >(
-    context: OperationContext<TParams, TQuery, TReq, TRes>,
-    path: string,
-    ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
-  ) {
-    return this.register<typeof context>(context, path, ["GET"], middleware);
-  }
+  // get<
+  //   TParams extends TSchema,
+  //   TQuery extends TSchema,
+  //   TReq extends TSchema,
+  //   TRes extends TSchema
+  // >(
+  //   context: OperationContext<TParams, TQuery, TReq, TRes>,
+  //   path: string,
+  //   ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
+  // ) {
+  //   return this.register<typeof context>(context, path, ["GET"], middleware);
+  // }
 
-  post<
-    TParams extends TSchema,
-    TQuery extends TSchema,
-    TReq extends TSchema,
-    TRes extends TSchema
-  >(
-    context: OperationContext<TParams, TQuery, TReq, TRes>,
-    path: string,
-    ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
-  ) {
-    return this.register(context, path, ["POST"], middleware);
-  }
+  // post<
+  //   TParams extends TSchema,
+  //   TQuery extends TSchema,
+  //   TReq extends TSchema,
+  //   TRes extends TSchema
+  // >(
+  //   context: OperationContext<TParams, TQuery, TReq, TRes>,
+  //   path: string,
+  //   ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
+  // ) {
+  //   return this.register(context, path, ["POST"], middleware);
+  // }
 
-  put<
-    TParams extends TSchema,
-    TQuery extends TSchema,
-    TReq extends TSchema,
-    TRes extends TSchema
-  >(
-    context: OperationContext<TParams, TQuery, TReq, TRes>,
-    path: string,
-    ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
-  ) {
-    return this.register<typeof context>(context, path, ["PUT"], middleware);
-  }
+  // put<
+  //   TParams extends TSchema,
+  //   TQuery extends TSchema,
+  //   TReq extends TSchema,
+  //   TRes extends TSchema
+  // >(
+  //   context: OperationContext<TParams, TQuery, TReq, TRes>,
+  //   path: string,
+  //   ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
+  // ) {
+  //   return this.register<typeof context>(context, path, ["PUT"], middleware);
+  // }
 
-  delete<
-    TParams extends TSchema,
-    TQuery extends TSchema,
-    TReq extends TSchema,
-    TRes extends TSchema
-  >(
-    context: OperationContext<TParams, TQuery, TReq, TRes>,
-    path: string,
-    ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
-  ) {
-    return this.register<typeof context>(context, path, ["DELETE"], middleware);
-  }
+  // delete<
+  //   TParams extends TSchema,
+  //   TQuery extends TSchema,
+  //   TReq extends TSchema,
+  //   TRes extends TSchema
+  // >(
+  //   context: OperationContext<TParams, TQuery, TReq, TRes>,
+  //   path: string,
+  //   ...middleware: Middleware<DefaultState, ServiceContext<typeof context>>[]
+  // ) {
+  //   return this.register<typeof context>(context, path, ["DELETE"], middleware);
+  // }
 }

@@ -1,4 +1,4 @@
-import { Service, Controller, Type, generate } from "@tracktile/veritas";
+import { Service, Controller, Type, generate } from "../src";
 
 const users = new Controller({
   prefix: "/users",
@@ -23,6 +23,7 @@ users.addOperation(
     method: "get",
     params: GetUserParams,
     res: GetUserResponse,
+    req: Type.Object({ test: Type.String() }),
   },
   async (ctx, next) => {
     // Within this handler
@@ -31,6 +32,8 @@ users.addOperation(
 
     // ctx.params has been validated and typed
     const { userId } = ctx.params;
+
+    const { test } = ctx.request.body;
 
     console.log("userId is", userId);
 
