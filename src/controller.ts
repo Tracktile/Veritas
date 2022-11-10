@@ -104,6 +104,7 @@ export class Controller<TExtend = {}> {
     };
   }
 
+  /* @ts-ignore */
   private validateAgainstContext<
     RouteContext extends OperationContext<TSchema, TSchema, TSchema, TSchema>
   >(

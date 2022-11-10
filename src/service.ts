@@ -149,8 +149,6 @@ export function combineServices<TExtend extends {}>(
   for (const service of services) {
     service.config.cors = combinedService.config.cors;
     service.bind(combinedService.router, config);
-    combinedService.use(combinedService.router.routes());
-    combinedService.use(combinedService.router.allowedMethods());
   }
 
   return combinedService;
