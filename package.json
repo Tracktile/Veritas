@@ -1,6 +1,6 @@
 {
   "name": "@tracktile/veritas",
-  "version": "0.0.13",
+  "version": "0.0.15",
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
