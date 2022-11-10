@@ -1,4 +1,5 @@
 import Koa, { DefaultState, Middleware } from "koa";
+import Cors, { Options as CorsOptions } from "@koa/cors";
 import Router from "@koa/router";
 import { TSchema } from "@sinclair/typebox";
 
@@ -18,15 +19,17 @@ interface ServiceOptions<TExtend> {
       TExtend
     >
   >[];
-  validatorWarnOnly?: boolean;
+  config?: Partial<ServiceConfiguration>;
 }
 
 interface ServiceConfiguration {
   validatorWarnOnly?: boolean;
+  cors: CorsOptions;
 }
 
 const DEFAULT_SERVICE_CONFIGURATION: ServiceConfiguration = {
   validatorWarnOnly: false,
+  cors: {},
 } as const;
 
 export class Service<TExtend = {}> extends Koa<
@@ -45,7 +48,6 @@ export class Service<TExtend = {}> extends Koa<
       TExtend
     >
   >[];
-  bound: boolean;
   router: Router<
     DefaultState,
     ServiceContext<
@@ -62,7 +64,7 @@ export class Service<TExtend = {}> extends Koa<
     tags = [],
     controllers = [],
     middlewares = [],
-    validatorWarnOnly = false,
+    config = DEFAULT_SERVICE_CONFIGURATION,
   }: ServiceOptions<TExtend>) {
     super();
     this.router = new Router<
@@ -72,14 +74,13 @@ export class Service<TExtend = {}> extends Koa<
         TExtend
       >
     >();
-    this.bound = false;
     this.title = title;
     this.description = description;
     this.tags = tags;
     this.prefix = prefix;
     this.controllers = controllers;
     this.middleware = middlewares;
-    this.config = { validatorWarnOnly };
+    this.config = { ...DEFAULT_SERVICE_CONFIGURATION, ...config };
   }
 
   register(controller: Controller<TExtend>) {
@@ -96,28 +97,32 @@ export class Service<TExtend = {}> extends Koa<
     > = this.router,
     config: ServiceConfiguration = this.config
   ) {
-    if (this.bound) {
-      return;
-    }
+    const serviceRouter = new Router<
+      DefaultState,
+      ServiceContext<
+        OperationContext<TSchema, TSchema, TSchema, TSchema>,
+        TExtend
+      >
+    >();
 
-    this.router.use(...this.middleware);
+    serviceRouter.use(...this.middleware);
 
     for (const controller of this.controllers) {
       controller.setValidatorWarnOnly(config.validatorWarnOnly ?? false);
-      controller.bind(this.router);
+      controller.bind(serviceRouter);
     }
 
     if (!["", "/"].includes(this.prefix)) {
-      target.use(this.prefix, this.router.routes());
-      target.use(this.prefix, this.router.allowedMethods());
+      target.use(this.prefix, serviceRouter.routes());
+      target.use(this.prefix, serviceRouter.allowedMethods());
     } else {
-      target.use(this.router.routes());
-      target.use(this.router.allowedMethods());
+      target.use(serviceRouter.routes());
+      target.use(serviceRouter.allowedMethods());
     }
-    this.bound = true;
   }
 
   start(port: number = 8080, addresses: string[] = ["127.0.0.1"]) {
+    this.use(Cors(this.config.cors));
     this.bind();
     this.use(this.router.routes());
     this.use(this.router.allowedMethods());
@@ -142,17 +147,10 @@ export function combineServices<TExtend extends {}>(
   const combinedService = new Service<TExtend>({});
 
   for (const service of services) {
-    const middler = new Router<
-      DefaultState,
-      ServiceContext<
-        OperationContext<TSchema, TSchema, TSchema, TSchema>,
-        TExtend
-      >
-    >();
-
-    service.bind(middler, config);
-    combinedService.use(middler.routes());
-    combinedService.use(middler.allowedMethods());
+    service.config.cors = combinedService.config.cors;
+    service.bind(combinedService.router, config);
+    combinedService.use(combinedService.router.routes());
+    combinedService.use(combinedService.router.allowedMethods());
   }
 
   return combinedService;

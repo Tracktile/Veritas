@@ -31,11 +31,6 @@ users.addOperation(
     // ctx.body must satisfy typeof UserResponse
 
     // ctx.params has been validated and typed
-    const { userId } = ctx.params;
-
-    const { test } = ctx.request.body;
-
-    console.log({ userId, test });
 
     // ctx.body has typeof { id: string, firstName: string, lastName: string, email: string}
     // and will be validated before sending the response
@@ -61,7 +56,7 @@ export const MyService = new Service({
     },
   ],
   controllers: [users],
-  validatorWarnOnly: true,
+  config: { validatorWarnOnly: true },
 });
 
 // Start and bind your service to a port
