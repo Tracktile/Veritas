@@ -2,6 +2,11 @@
   <img  src="https://i.imgur.com/ANnBTvB.png"  />
 </p>
 
+<p align="center">
+  <img src="https://badgen.net/npm/v/@tracktile/veritas"/>
+  <img src="https://badgen.net/bundlephobia/minzip/@tracktile/veritas"/>
+</p>
+
  <p  align="center">Minimal & code first API framework with full type inference, validation, OpenAPI schema generation, and serverless integration.</p>
 
 ## Features
