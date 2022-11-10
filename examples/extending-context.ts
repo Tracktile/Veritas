@@ -25,7 +25,6 @@ test.addOperation(
 const app = new Service<CustomerContextProperties>({
   title: "MyService",
   controllers: [test],
-  validatorWarnOnly: true,
 });
 
 app.start();

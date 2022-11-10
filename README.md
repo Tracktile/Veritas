@@ -2,11 +2,23 @@
   <img  src="https://i.imgur.com/ANnBTvB.png"  />
 </p>
 
-<p  align="center">A light weight and code first API framework with automatic type inference and OpenAPI schema generation.</p>
+ <p  align="center">Minimal & code first API framework with full type inference, validation, OpenAPI schema generation, and serverless integration.</p>
 
-## :construction: Disclaimer
+## Features
 
-This is still very much a work in progress and at this time makes no promises about functionality or API stability.
+- :muscle: Based on [Koa](https://github.com/koajs/koa), [Typebox](https://github.com/sinclairzx81/typebox), and [openapi3-ts](https://github.com/metadevpro/openapi3-ts).
+
+- :pencil2: Define your Request, Response, URL Parameters, and Query Parameters alongside with your endpoints.
+
+- :necktie: Automatically infers types of parameter, request, and response body types in your handler.
+
+- :lock: Automatically validates each request and response against defined types and validations.
+
+- :notebook_with_decorative_cover: Automatically generates an OpenAPI schema describing your API as YAML or JSON.
+
+- :battery: Deploy your API as microservice, or a modular monolith to AWS Lambda using our provided CDK construct.
+
+- :runner: Run all of your services in a single process for local development. Deploy as seperate services.
 
 ## Installation
 
@@ -16,20 +28,12 @@ This is still very much a work in progress and at this time makes no promises ab
   yarn add @tracktile/veritas
 ```
 
-## Features
-
-- Define your Request, Response, URL Parameters, and Query Parameters along with your endpoint.
-
-- Enjoy complete type safety based on your router definitions.
-
-- Automatically validate every request and response against your router definitions.
-
-- Automatically generate a customized OpenAPI schema for your API as YAML or JSON.
-
 ## Usage
 
+### Build an amazing API
+
 ```typescript
-import { Service, Controller, Type, generate } from "@tracktile/veritas";
+import { Service, Controller, Type, serverless } from "@tracktile/veritas";
 
 const users = new Controller({
   prefix: "/users",
@@ -56,28 +60,17 @@ users.addOperation(
     res: GetUserResponse,
   },
   async (ctx, next) => {
-    // Within this handler
-    // ctx.params.userId is valid and typed
-    // ctx.body must satisfy typeof UserResponse
-
-    // ctx.params has been validated and typed
+    /* ctx.params has been validated and inferred as:
+        { userId: string } */
     const { userId } = ctx.params;
-
-    console.log("userId is", userId);
-
-    // ctx.body has typeof { id: string, firstName: string, lastName: string, email: string}
-    // and will be validated before sending the response
-    ctx.body = {
-      id: "some-uuid", // In this example, this will cause a ResponseValidation error as its not a valid uuid!
-      firstName: "Test",
-      lastName: "McTester",
-      email: "test.mctester@testing.com",
-    };
-
+    /* ctx.body type has been validated and inferred as:
+       { id: string, firstName: string, lastName: string, email: string} */
+    ctx.body = getUser(userId);
     return next();
   }
 );
 
+/* Service title, description, tags, etc are used to generate openapi schema */
 export const MyService = new Service({
   title: "My Wonderful Service",
   description: "Microservice responsible for handling X in the N platform.",
@@ -85,22 +78,28 @@ export const MyService = new Service({
   controllers: [users],
 });
 
-// Generate and log Openapi Schema Yaml
-console.log(generate(MyService));
-
-// OR start and bind your service to a port
+// Start and bind your service to a port
 MyService.start(8080);
 
-// COMING SOON: OR run your service inside a lambda
-// exports.handler = MyService.lambda();
+// OR run your service inside a lambda
+exports.handler = serverless(MyService);
 ```
 
-## Coming Soon
+### Generate your OpenAPI documentation
 
-- [ ] Support adding shared types to the OpenAPI specifications `components` section and use `$ref` to reference them from the path schemas section.
-- [ ] Improved error messaging on request, response, url params, and query params validation.
-- [ ] Support for serving openapi json schema directly from API (/\_schema)
-- [ ] Support for binding to port or running in a Lambda
+```sh
+yarn veritas generate --yaml --out=./my-api-schema.yaml
+OR
+yarn veritas generate --json --out=./my-api-schema.json
+```
+
+## Examples
+
+Small example projects can be found in the [examples/](./examples) folder.
+
+- [Basic API](./examples/basic.ts)
+- [Custom Context](./examples/extending-context.ts)
+- [Serverless / AWS Lambda](./examples/serverless.ts)
 
 ## Authors
 
