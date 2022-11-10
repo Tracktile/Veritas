@@ -140,12 +140,7 @@ export class Controller<TExtend = {}> {
         console.warn("RequestValidationError", errors);
       }
 
-      try {
-        await next();
-      } catch (err) {
-        console.warn(err);
-        return;
-      }
+      await next();
 
       if (context.res) {
         errors = [...TypeCompiler.Compile(context.res).Errors(ctx.body)];
