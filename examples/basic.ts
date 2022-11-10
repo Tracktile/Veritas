@@ -1,4 +1,4 @@
-import { Service, Controller, Type, generate } from "../src";
+import { Service, Controller, Type } from "../src";
 
 const users = new Controller({
   prefix: "/users",
@@ -35,7 +35,7 @@ users.addOperation(
 
     const { test } = ctx.request.body;
 
-    console.log("userId is", userId);
+    console.log({ userId, test });
 
     // ctx.body has typeof { id: string, firstName: string, lastName: string, email: string}
     // and will be validated before sending the response
@@ -54,14 +54,17 @@ export const MyService = new Service({
   title: "My Wonderful Service",
   description: "Microservice responsible for handling X in the N platform.",
   tags: ["ServiceA"],
+  middlewares: [
+    async (ctx, next) => {
+      console.log(ctx.path);
+      return next();
+    },
+  ],
   controllers: [users],
+  validatorWarnOnly: true,
 });
 
-// Generate and log Openapi Schema Yaml
-console.log(generate(MyService));
-
-// OR start and bind your service to a port
+// Start and bind your service to a port
 MyService.start(8080);
 
-// COMING SOON: OR run your service inside a lambda
-// exports.handler = MyService.lambda();
+console.log("Listening on port 8080");

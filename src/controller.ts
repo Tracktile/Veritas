@@ -3,6 +3,7 @@ import { Type, TSchema } from "@sinclair/typebox";
 import Router from "@koa/router";
 import { DefaultState, Middleware, Next } from "koa";
 
+import { Service } from "./service";
 import { ServiceContext, OperationContext, Operation } from "./types";
 
 export class BadRequestError extends Error {
@@ -22,6 +23,7 @@ interface ControllerOptions {
 }
 
 export class Controller<TExtend = {}> {
+  service?: Service<TExtend>;
   prefix: string;
   tags: string[];
   auth: boolean;
@@ -33,7 +35,16 @@ export class Controller<TExtend = {}> {
       TExtend
     >
   >;
-  operations: OperationContext<TSchema, TSchema, TSchema, TSchema>[];
+  operations: [
+    OperationContext<TSchema, TSchema, TSchema, TSchema>,
+    (
+      ctx: ServiceContext<
+        OperationContext<TSchema, TSchema, TSchema, TSchema>,
+        TExtend
+      >,
+      next: Next
+    ) => Promise<void>
+  ][];
   validatorWarnOnly: boolean;
 
   constructor({
@@ -48,7 +59,7 @@ export class Controller<TExtend = {}> {
         OperationContext<TSchema, TSchema, TSchema, TSchema>,
         TExtend
       >
-    >({ prefix });
+    >();
     this.preMatchedRouteMiddleware = middleware;
     this.tags = tags;
     this.auth = auth;
@@ -71,10 +82,6 @@ export class Controller<TExtend = {}> {
 
   setValidatorWarnOnly(state: boolean) {
     this.validatorWarnOnly = state;
-  }
-
-  prependPrefix(prefix: string) {
-    this.prefix = `${prefix}${this.prefix}`;
   }
 
   private createOperation<
@@ -156,7 +163,7 @@ export class Controller<TExtend = {}> {
 
   register<T extends OperationContext<TSchema, TSchema, TSchema, TSchema>>(
     context: T,
-    path: string | RegExp,
+    path: string,
     methods: string[],
     routeMiddleware: Middleware<DefaultState, ServiceContext<T, TExtend>>[],
     options?: Router.LayerOptions
@@ -175,7 +182,34 @@ export class Controller<TExtend = {}> {
           >[]),
           ...passedMiddleware.slice(passedMiddleware.length - 1),
         ];
+
     return this.router.register(path, methods, finalMiddleware, options);
+  }
+
+  bind(
+    router: Router<
+      DefaultState,
+      ServiceContext<
+        OperationContext<TSchema, TSchema, TSchema, TSchema>,
+        TExtend
+      >
+    > = this.router
+  ) {
+    this.operations.forEach(([operation, handler]) => {
+      this.register(
+        operation,
+        operation.path,
+        [operation.method],
+        [...operation.middleware, handler]
+      );
+    });
+    if (!["", "/"].includes(this.prefix)) {
+      router.use(this.prefix, this.routes());
+      router.use(this.prefix, this.allowedMethods());
+    } else {
+      router.use(this.routes());
+      router.use(this.allowedMethods());
+    }
   }
 
   addOperation<
@@ -191,15 +225,9 @@ export class Controller<TExtend = {}> {
         TExtend
       >,
       next: Next
-    ) => void
+    ) => Promise<void>
   ) {
     const operation = this.createOperation(definition);
-    this.operations.push(operation);
-    this.register(
-      operation,
-      operation.path,
-      [operation.method],
-      [...operation.middleware, handler]
-    );
+    this.operations.push([operation, handler]);
   }
 }

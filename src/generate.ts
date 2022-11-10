@@ -37,7 +37,7 @@ export async function generate(service: Service) {
 
     const resource = "/"; // TODO: fix nested service path mapping
 
-    ops.forEach((op) => {
+    ops.forEach(([op]) => {
       const path = `${resource === "/" ? "" : resource}${controller.prefix}${
         op.path
       }`;
