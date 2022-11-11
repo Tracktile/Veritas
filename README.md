@@ -23,7 +23,7 @@
 
 - :battery: Deploy your API as microservice, or a modular monolith to AWS Lambda using our provided CDK construct.
 
-- :runner: Run all of your services in a single process for local development. Deploy as seperate services.
+- :runner: Run all of your services in a single process for local development. Deploy as separate services.
 
 ## Installation
 
@@ -93,9 +93,9 @@ exports.handler = serverless(MyService);
 ### Generate your OpenAPI documentation
 
 ```sh
-yarn veritas generate --yaml --out=./my-api-schema.yaml
+yarn veritas generate --yaml --in=./myService.ts --out=./my-api-schema.yaml
 OR
-yarn veritas generate --json --out=./my-api-schema.json
+yarn veritas generate --json --in=./myCombinedServices.ts --out=./my-api-schema.json
 ```
 
 ## Examples

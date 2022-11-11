@@ -1,19 +1,21 @@
 import { RequestListener } from "http";
 import { Handler } from "aws-lambda";
+import Cors from "@koa/cors";
 import Koa, { Context, Next, DefaultState } from "koa";
-import mount from "koa-mount";
+
 import serverlessExpress, {
   getCurrentInvoke,
 } from "@vendia/serverless-express";
-
-import { Service } from "./service";
+import { Service, ServiceContext } from "../src";
 
 interface ConfigureParams {
   app: RequestListener;
   resolutionMode: string;
 }
 
-export const serverless = <T>(service: Service<T>): Handler => {
+export const serverless = <T extends ServiceContext = ServiceContext>(
+  service: Service<T>
+): Handler => {
   const constructWrappedKoaApp = (app: Service<T>): Koa<DefaultState, T> => {
     const wrapperApp = new Koa<DefaultState, T>({});
     wrapperApp.proxy = true;
@@ -21,13 +23,8 @@ export const serverless = <T>(service: Service<T>): Handler => {
     wrapperApp.use(async (ctx: Context, next: Next) => {
       try {
         const { event } = getCurrentInvoke();
-        console.log(JSON.stringify(event));
-
-        if (event.requestContext && event.requestContext.path) {
-          ctx.path = event.requestContext.path;
-          ctx.url = event.requestContext.path;
-        }
-
+        ctx.path = event.requestContext.path;
+        ctx.url = event.requestContext.path;
         await next();
       } catch (err) {
         console.log(err);
@@ -35,7 +32,10 @@ export const serverless = <T>(service: Service<T>): Handler => {
       }
     });
 
-    wrapperApp.use(mount(app));
+    app.use(Cors(service.config.cors));
+    app.bind();
+    wrapperApp.use(app.router.routes());
+    wrapperApp.use(app.router.allowedMethods());
 
     return wrapperApp;
   };
