@@ -93,8 +93,8 @@ export class Controller<TExtend = {}> {
     return {
       ...base,
       auth: !!base.auth,
-      summary: base.summary ?? base.name,
-      description: base.description ?? base.name,
+      summary: base.name,
+      description: base.description ?? "No Description",
       params: base.params ?? Type.Object({}),
       query: base.query ?? Type.Object({}),
       req: base.req ?? Type.Any(),
