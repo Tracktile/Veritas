@@ -97,13 +97,20 @@ const processArgs = () => {
 };
 
 async function main() {
-  const args = processArgs();
-  const { default: service } = await import(args.input);
-  const content = await generate(service, {
-    format: args.json ? "json" : "yaml",
-  });
-  fs.writeFileSync(args.output, content, { encoding: "utf8" });
-  process.exit(0);
+  try {
+    const args = processArgs();
+    const { default: service } = await import(args.input);
+    const content = await generate(service, {
+      format: args.json ? "json" : "yaml",
+    });
+    fs.writeFileSync(args.output, content, { encoding: "utf8" });
+    process.exit(0);
+  } catch (err) {
+    if (err instanceof Error) {
+      fatal(err.message);
+    }
+    fatal("Something has gone terribly wrong.");
+  }
 }
 
 main();
