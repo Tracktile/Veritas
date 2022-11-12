@@ -6,11 +6,12 @@ import { TSchema } from "@sinclair/typebox";
 import { Controller } from "./controller";
 import { ServiceContext, OperationContext } from "./types";
 
-interface ServiceOptions<TExtend> {
+export interface ServiceOptions<TExtend> {
   title?: string;
   description?: string;
   tags?: string[];
   prefix?: string;
+  version?: string;
   controllers?: Controller<TExtend>[];
   middlewares?: Middleware<
     DefaultState,
@@ -22,12 +23,12 @@ interface ServiceOptions<TExtend> {
   config?: Partial<ServiceConfiguration>;
 }
 
-interface ServiceConfiguration {
+export interface ServiceConfiguration {
   validatorWarnOnly?: boolean;
   cors: CorsOptions;
 }
 
-const DEFAULT_SERVICE_CONFIGURATION: ServiceConfiguration = {
+export const DEFAULT_SERVICE_CONFIGURATION: ServiceConfiguration = {
   validatorWarnOnly: false,
   cors: {},
 } as const;
@@ -36,11 +37,13 @@ export class Service<TExtend = {}> extends Koa<
   DefaultState,
   ServiceContext<OperationContext<TSchema, TSchema, TSchema, TSchema>, TExtend>
 > {
+  version: string;
   title: string;
   description: string;
   tags: string[];
   prefix: string;
   controllers: Controller<TExtend>[];
+  children: Service<TExtend>[];
   middleware: Middleware<
     DefaultState,
     ServiceContext<
@@ -61,6 +64,7 @@ export class Service<TExtend = {}> extends Koa<
     title = "",
     description = "",
     prefix = "",
+    version = "",
     tags = [],
     controllers = [],
     middlewares = [],
@@ -74,6 +78,8 @@ export class Service<TExtend = {}> extends Koa<
         TExtend
       >
     >();
+    this.version = version;
+    this.children = [];
     this.title = title;
     this.description = description;
     this.tags = tags;
@@ -130,26 +136,4 @@ export class Service<TExtend = {}> extends Koa<
       this.listen(port, address);
     }
   }
-}
-
-/**
- * Utility method for creating a single Veritas Service out of many independent services.
- * Useful when spinning up many microservices as a monolithic gateway bound to a single port.
- *
- * This method skips the regular bind phase of each service and instead creates an independent
- * Router for each service on which that services middleware and individual controllers are mounted
- * and the appropriate prefix.
- */
-export function combineServices<TExtend extends {}>(
-  services: Service<TExtend>[],
-  config: ServiceConfiguration = DEFAULT_SERVICE_CONFIGURATION
-): Service<TExtend> {
-  const combinedService = new Service<TExtend>({});
-
-  for (const service of services) {
-    service.config.cors = combinedService.config.cors;
-    service.bind(combinedService.router, config);
-  }
-
-  return combinedService;
 }

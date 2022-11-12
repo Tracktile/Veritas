@@ -1,11 +1,11 @@
 {
   "name": "@tracktile/veritas",
-  "version": "0.0.19",
+  "version": "0.1.0",
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "cli": "node dist/cli.js"
+    "cli": "ts-node ./src/cli.ts"
   },
   "bin": {
     "veritas": "./dist/cli.js"
@@ -32,6 +32,7 @@
     "koa": "^2.13.4",
     "openapi3-ts": "^3.1.1",
     "reflect-metadata": "^0.1.13",
+    "title-case": "^3.0.3",
     "ts-command-line-args": "^2.3.1"
   }
 }

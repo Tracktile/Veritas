@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import kebabCase from "kebab-case";
+import { titleCase } from "title-case";
 import { TSchema } from "@sinclair/typebox";
 import { TypeGuard } from "@sinclair/typebox/guard";
 import convert from "@openapi-contrib/json-schema-to-openapi-schema";
@@ -7,6 +8,7 @@ import * as oa from "openapi3-ts";
 
 import { OperationContext } from "./types";
 import { Service } from "./service";
+import { CombinedService, isCombinedService } from "./combined-service";
 
 export type Services = { resource: string; service: Service }[];
 
@@ -20,33 +22,148 @@ const formatPath = (path: string) => {
       return part;
     })
     .join("/");
+
+  if (converted === "/") {
+    return converted;
+  }
+
   return converted.endsWith("/")
     ? converted.slice(0, converted.length - 1)
     : converted;
 };
 
-export async function generate(service: Service) {
+const kebab = (str: string) => kebabCase(str).substring(1);
+
+interface GenerateOptions {
+  format: "json" | "yaml";
+}
+
+const DEFAULT_GENERATE_OPTIONS: GenerateOptions = {
+  format: "yaml",
+};
+
+export async function generate(
+  target: Service | CombinedService,
+  { format = "yaml" }: GenerateOptions = DEFAULT_GENERATE_OPTIONS
+) {
   const spec = oa.OpenApiBuilder.create();
+
+  spec
+    .addTitle(target.title)
+    .addDescription(target.description)
+    .addSecurityScheme("JWT", {
+      bearerFormat: "JWT",
+      type: "http",
+      scheme: "bearer",
+      description:
+        "The JWT received by authenticating to the /auth/login endpoint.",
+    })
+    .addResponse("400", {
+      description: "Bad Request Error",
+      content: {
+        "application/json": {
+          schema: {
+            properties: {
+              status: { type: "number" },
+              message: { type: "string" },
+            },
+            example: {
+              status: 400,
+              message:
+                "A helpful error message indicating what was invalid about your request",
+            },
+          },
+        },
+      },
+    })
+    .addResponse("401", {
+      description: "Unauthorized",
+      content: {
+        "application/json": {
+          schema: {
+            properties: {
+              status: { type: "number" },
+              message: { type: "string" },
+            },
+            example: {
+              status: 401,
+              message: "You must be authenticated to access this resource.",
+            },
+          },
+        },
+      },
+    })
+    .addResponse("403", {
+      description: "Forbidden",
+      content: {
+        "application/json": {
+          schema: {
+            properties: {
+              status: { type: "number" },
+              message: { type: "string" },
+            },
+            example: {
+              status: 403,
+              message:
+                "Current user does not have permissions to access this resource.",
+            },
+          },
+        },
+      },
+    })
+    .addResponse("500", {
+      description: "Internal Server Error",
+      content: {
+        "application/json": {
+          schema: {
+            properties: {
+              status: { type: "number" },
+              message: { type: "string" },
+            },
+            example: {
+              status: 500,
+              message: "Something has gone horribly wrong.",
+            },
+          },
+        },
+      },
+    });
+
+  if (isCombinedService(target)) {
+    target.children.forEach((service) => {
+      spec.addTag({
+        name: titleCase(service.title),
+        description: service.description,
+      });
+      service.tags = [titleCase(service.title)];
+    });
+  }
+
   const operationsByPath: Record<
     string,
     OperationContext<TSchema, TSchema, TSchema, TSchema>[]
   > = {};
 
-  service.controllers.forEach((controller) => {
-    const ops = controller.getOperations();
+  const services = isCombinedService(target) ? target.children : [target];
 
-    const resource = "/"; // TODO: fix nested service path mapping
+  services.forEach((service) => {
+    service.controllers.forEach((controller) => {
+      const ops = controller.getOperations();
 
-    ops.forEach(([op]) => {
-      const path = `${resource === "/" ? "" : resource}${controller.prefix}${
-        op.path
-      }`;
+      ops.forEach(([op]) => {
+        const path = `${
+          ["", "/"].includes(service.prefix) ? "" : service.prefix
+        }${controller.prefix}${op.path}`;
 
-      if (!operationsByPath[path]) {
-        operationsByPath[path] = [];
-      }
+        if (!operationsByPath[path]) {
+          operationsByPath[path] = [];
+        }
 
-      operationsByPath[path].push(op);
+        operationsByPath[path].push({
+          ...op,
+          tags: [...new Set([...service.tags, ...controller.tags, ...op.tags])],
+        });
+      });
     });
   });
 
@@ -82,10 +199,10 @@ export async function generate(service: Service) {
       pathObj = {
         ...pathObj,
         [op.method]: {
-          operationId: kebabCase(op.name.replace(/\s/g, "")),
-          summary: op.summary,
+          operationId: kebab(op.name),
+          summary: titleCase(op.summary),
           description: op.description,
-          tags: op.tags,
+          tags: op.tags.map(titleCase),
           ...(["post", "put"].includes(op.method)
             ? {
                 requestBody: {
@@ -122,5 +239,8 @@ export async function generate(service: Service) {
     spec.addPath(formatPath(path), pathObj);
   }
 
-  return spec.getSpecAsYaml();
+  if (format === "yaml") {
+    return spec.getSpecAsYaml();
+  }
+  return spec.getSpecAsJson();
 }
