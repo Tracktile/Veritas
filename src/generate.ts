@@ -200,7 +200,7 @@ export async function generate(
         ...pathObj,
         [op.method]: {
           operationId: kebab(op.name),
-          summary: titleCase(op.summary),
+          summary: op.summary,
           description: op.description,
           tags: op.tags.map(titleCase),
           ...(["post", "put"].includes(op.method)
