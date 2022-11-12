@@ -93,9 +93,9 @@ exports.handler = serverless(MyService);
 ### Generate your OpenAPI documentation
 
 ```sh
-yarn veritas generate --yaml --in=./myService.ts --out=./my-api-schema.yaml
+yarn veritas --in=./myService.ts --out=./my-api-schema.yaml --yaml
 OR
-yarn veritas generate --json --in=./myCombinedServices.ts --out=./my-api-schema.json
+yarn veritas --in=./myCombinedServices.ts --out=./my-api-schema.json --json 
 ```
 
 ## Examples
