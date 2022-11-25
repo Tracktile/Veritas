@@ -13,7 +13,7 @@ interface ConfigureParams {
   resolutionMode: string;
 }
 
-export const serverless = <T extends ServiceContext = ServiceContext>(
+export const serverless = <T extends ServiceContext>(
   service: Service<T>
 ): Handler => {
   const constructWrappedKoaApp = (app: Service<T>): Koa<DefaultState, T> => {
