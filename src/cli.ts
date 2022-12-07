@@ -30,8 +30,7 @@ const processArgs = () => {
         input: {
           type: String,
           alias: "i",
-          description:
-            "The service from which to generate schema. Your Service should be the files default export.",
+          description: "The service from which to generate schema. Your Service should be the files default export.",
         },
         output: {
           type: String,
@@ -65,15 +64,13 @@ const processArgs = () => {
             content: "Batteries included, but like.. watch batteries.",
           },
         ],
-      }
+      },
     );
     if (args.yaml && args.json) {
       fatal("Both --yaml and --json were passed, choose one.");
     }
     if (!args.yaml && !args.json) {
-      warn(
-        "Neither --yaml or --json arguments provided, defauling output to YAML. "
-      );
+      warn("Neither --yaml or --json arguments provided, defauling output to YAML. ");
       args.yaml = true;
     }
 
@@ -90,6 +87,7 @@ const processArgs = () => {
     return args;
   } catch (err) {
     if (err instanceof Error) {
+      console.error(err);
       return fatal(err.message);
     }
     return fatal("Error encountered while process arguments.");
@@ -107,6 +105,7 @@ async function main() {
     process.exit(0);
   } catch (err) {
     if (err instanceof Error) {
+      console.error(err);
       fatal(err.message);
     }
     fatal("Something has gone terribly wrong.");

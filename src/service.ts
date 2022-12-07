@@ -1,25 +1,37 @@
 import Koa, { DefaultState, Middleware } from "koa";
 import Cors, { Options as CorsOptions } from "@koa/cors";
 import Router from "@koa/router";
-import { TSchema } from "@sinclair/typebox";
 
 import { Controller } from "./controller";
-import { ServiceContext, OperationContext } from "./types";
 
-export interface ServiceOptions<TExtend> {
+export type Contact = {
+  name: string;
+  email: string;
+  url: string;
+};
+
+export type License = {
+  name: string;
+  url: string;
+};
+
+export type Server = {
+  description: string;
+  url: string;
+};
+
+export interface ServiceOptions<TExtend = Record<string, never>> {
   title?: string;
   description?: string;
   tags?: string[];
   prefix?: string;
   version?: string;
+  license?: License;
+  contact?: Contact;
+  servers?: Server[];
   controllers?: Controller<TExtend>[];
-  middlewares?: Middleware<
-    DefaultState,
-    ServiceContext<
-      OperationContext<TSchema, TSchema, TSchema, TSchema>,
-      TExtend
-    >
-  >[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  middlewares?: Middleware<DefaultState, any>[];
   config?: Partial<ServiceConfiguration>;
 }
 
@@ -33,31 +45,19 @@ export const DEFAULT_SERVICE_CONFIGURATION: ServiceConfiguration = {
   cors: {},
 } as const;
 
-export class Service<TExtend = {}> extends Koa<
-  DefaultState,
-  ServiceContext<OperationContext<TSchema, TSchema, TSchema, TSchema>, TExtend>
-> {
+export class Service<TExtend = Record<string, unknown>> extends Koa<DefaultState, unknown> {
   version: string;
   title: string;
   description: string;
   tags: string[];
   prefix: string;
+  contact: Contact;
+  license: License;
+  servers: Server[];
   controllers: Controller<TExtend>[];
   children: Service<TExtend>[];
-  middleware: Middleware<
-    DefaultState,
-    ServiceContext<
-      OperationContext<TSchema, TSchema, TSchema, TSchema>,
-      TExtend
-    >
-  >[];
-  router: Router<
-    DefaultState,
-    ServiceContext<
-      OperationContext<TSchema, TSchema, TSchema, TSchema>,
-      TExtend
-    >
-  >;
+  middleware: Middleware<DefaultState, unknown>[];
+  router: Router<DefaultState, TExtend>;
   config: ServiceConfiguration;
 
   constructor({
@@ -65,27 +65,27 @@ export class Service<TExtend = {}> extends Koa<
     description = "",
     prefix = "",
     version = "",
+    servers = [{ description: "", url: "" }],
+    contact = { name: "", email: "", url: "" },
+    license = { name: "", url: "" },
     tags = [],
     controllers = [],
     middlewares = [],
     config = DEFAULT_SERVICE_CONFIGURATION,
   }: ServiceOptions<TExtend>) {
     super();
-    this.router = new Router<
-      DefaultState,
-      ServiceContext<
-        OperationContext<TSchema, TSchema, TSchema, TSchema>,
-        TExtend
-      >
-    >();
+    this.router = new Router<DefaultState, TExtend>();
     this.version = version;
     this.children = [];
     this.title = title;
     this.description = description;
     this.tags = tags;
+    this.contact = contact;
+    this.license = license;
+    this.servers = servers;
     this.prefix = prefix;
     this.controllers = controllers;
-    this.middleware = middlewares;
+    this.middleware = middlewares as Middleware<DefaultState, unknown>[];
     this.config = { ...DEFAULT_SERVICE_CONFIGURATION, ...config };
   }
 
@@ -93,23 +93,8 @@ export class Service<TExtend = {}> extends Koa<
     this.controllers.push(controller);
   }
 
-  bind(
-    target: Router<
-      DefaultState,
-      ServiceContext<
-        OperationContext<TSchema, TSchema, TSchema, TSchema>,
-        TExtend
-      >
-    > = this.router,
-    config: ServiceConfiguration = this.config
-  ) {
-    const serviceRouter = new Router<
-      DefaultState,
-      ServiceContext<
-        OperationContext<TSchema, TSchema, TSchema, TSchema>,
-        TExtend
-      >
-    >();
+  bind(target: Router<DefaultState, TExtend> = this.router, config: ServiceConfiguration = this.config) {
+    const serviceRouter = new Router<DefaultState, unknown>();
 
     serviceRouter.use(...this.middleware);
 
@@ -127,7 +112,7 @@ export class Service<TExtend = {}> extends Koa<
     }
   }
 
-  start(port: number = 8080, addresses: string[] = ["127.0.0.1"]) {
+  start(port = 8080, addresses: string[] = ["127.0.0.1"]) {
     this.use(Cors(this.config.cors));
     this.bind();
     this.use(this.router.routes());

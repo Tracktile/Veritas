@@ -1,41 +1,56 @@
 import {
-	Service,
-	ServiceOptions,
-	ServiceConfiguration,
-	DEFAULT_SERVICE_CONFIGURATION,
+  Service,
+  ServiceOptions,
+  ServiceConfiguration,
+  DEFAULT_SERVICE_CONFIGURATION,
+  Contact,
+  License,
+  Server,
 } from "./service";
 
 export interface CombinedServiceConfiguration extends ServiceConfiguration {
-	title?: string;
-	description?: string;
-	tags?: string[];
-	version?: string;
+  title?: string;
+  description?: string;
+  tags?: string[];
+  version?: string;
+  contact?: Contact;
+  license?: License;
+  servers?: Server[];
 }
 
-export interface CombinedServiceOptions<TExtend = {}>
-	extends ServiceOptions<TExtend> {
-	children: Service<TExtend>[];
+export interface CombinedServiceOptions<TExtend = Record<string, never>> extends ServiceOptions<TExtend> {
+  children: Service<TExtend>[];
 }
 
 export const DEFAULT_COMBINED_SERVICE_CONFIGURATION = {
-	...DEFAULT_SERVICE_CONFIGURATION,
-	title: "",
-	description: "",
-	tags: [] as string[],
+  ...DEFAULT_SERVICE_CONFIGURATION,
+  title: "",
+  description: "",
+  tags: [] as string[],
+  contact: {
+    name: "",
+    email: "",
+    url: "",
+  },
+  license: {
+    name: "",
+    url: "",
+  },
 } as const;
 
-export const isCombinedService = (
-	service: Service | CombinedService
-): service is CombinedService =>
-	"children" in service && Array.isArray(service.children);
+export function isCombinedService<TExtend = Record<string, never>>(
+  service: Service<TExtend> | CombinedService<TExtend>,
+): service is CombinedService<TExtend> {
+  return "children" in service && Array.isArray(service.children);
+}
 
-export class CombinedService<TExtend = {}> extends Service<TExtend> {
-	children: Service<TExtend>[];
+export class CombinedService<TExtend = Record<string, never>> extends Service<TExtend> {
+  children: Service<TExtend>[];
 
-	constructor({ children, ...options }: CombinedServiceOptions<TExtend>) {
-		super(options);
-		this.children = children;
-	}
+  constructor({ children, ...options }: CombinedServiceOptions<TExtend>) {
+    super(options);
+    this.children = children;
+  }
 }
 
 /**
@@ -46,21 +61,21 @@ export class CombinedService<TExtend = {}> extends Service<TExtend> {
  * Router for each service on which that services middleware and individual controllers are mounted
  * and the appropriate prefix.
  */
-export function combineServices<TExtend extends {}>(
-	services: Service<TExtend>[],
-	config: CombinedServiceConfiguration = DEFAULT_COMBINED_SERVICE_CONFIGURATION
+export function combineServices<TExtend = Record<string, never>>(
+  services: Service<TExtend>[],
+  config: CombinedServiceConfiguration = DEFAULT_COMBINED_SERVICE_CONFIGURATION,
 ): Service<TExtend> {
-	const combinedService = new CombinedService<TExtend>({
-		title: config.title,
-		description: config.description,
-		tags: config.tags,
-		children: services,
-	});
+  const combinedService = new CombinedService<TExtend>({
+    title: config.title,
+    description: config.description,
+    tags: config.tags,
+    children: services,
+  });
 
-	for (const service of services) {
-		service.config.cors = combinedService.config.cors;
-		service.bind(combinedService.router, config);
-	}
+  for (const service of services) {
+    service.config.cors = combinedService.config.cors;
+    service.bind(combinedService.router, config);
+  }
 
-	return combinedService;
+  return combinedService;
 }

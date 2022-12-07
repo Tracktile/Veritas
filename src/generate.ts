@@ -6,11 +6,14 @@ import { TypeGuard } from "@sinclair/typebox/guard";
 import convert from "@openapi-contrib/json-schema-to-openapi-schema";
 import * as oa from "openapi3-ts";
 
-import { OperationContext } from "./types";
+import { OperationDefinition } from "./types";
 import { Service } from "./service";
 import { CombinedService, isCombinedService } from "./combined-service";
 
-export type Services = { resource: string; service: Service }[];
+export type Services<TContext = Record<string, never>> = {
+  resource: string;
+  service: Service<TContext>;
+}[];
 
 const formatPath = (path: string) => {
   const converted = path
@@ -27,9 +30,7 @@ const formatPath = (path: string) => {
     return converted;
   }
 
-  return converted.endsWith("/")
-    ? converted.slice(0, converted.length - 1)
-    : converted;
+  return converted.endsWith("/") ? converted.slice(0, converted.length - 1) : converted;
 };
 
 const kebab = (str: string) => kebabCase(str).substring(1);
@@ -42,21 +43,18 @@ const DEFAULT_GENERATE_OPTIONS: GenerateOptions = {
   format: "yaml",
 };
 
-export async function generate(
-  target: Service | CombinedService,
-  { format = "yaml" }: GenerateOptions = DEFAULT_GENERATE_OPTIONS
+export async function generate<TContext = Record<string, never>>(
+  target: Service<TContext> | CombinedService<TContext>,
+  { format = "yaml" }: GenerateOptions = DEFAULT_GENERATE_OPTIONS,
 ) {
-  const spec = oa.OpenApiBuilder.create();
-
-  spec
+  const spec = oa.OpenApiBuilder.create()
     .addTitle(target.title)
     .addDescription(target.description)
     .addSecurityScheme("JWT", {
       bearerFormat: "JWT",
       type: "http",
       scheme: "bearer",
-      description:
-        "The JWT received by authenticating to the /auth/login endpoint.",
+      description: "The JWT received by authenticating to the /auth/login endpoint.",
     })
     .addResponse("400", {
       description: "Bad Request Error",
@@ -69,8 +67,7 @@ export async function generate(
             },
             example: {
               status: 400,
-              message:
-                "A helpful error message indicating what was invalid about your request",
+              message: "A helpful error message indicating what was invalid about your request",
             },
           },
         },
@@ -104,8 +101,7 @@ export async function generate(
             },
             example: {
               status: 403,
-              message:
-                "Current user does not have permissions to access this resource.",
+              message: "Current user does not have permissions to access this resource.",
             },
           },
         },
@@ -139,21 +135,19 @@ export async function generate(
     });
   }
 
-  const operationsByPath: Record<
-    string,
-    OperationContext<TSchema, TSchema, TSchema, TSchema>[]
-  > = {};
+  const operationsByPath: Record<string, OperationDefinition<TSchema, TSchema, TSchema, TSchema>[]> = {};
 
   const services = isCombinedService(target) ? target.children : [target];
 
   services.forEach((service) => {
+    console.log("Service", service);
     service.controllers.forEach((controller) => {
+      console.log("Controller", controller);
       const ops = controller.getOperations();
 
       ops.forEach(([op]) => {
-        const path = `${
-          ["", "/"].includes(service.prefix) ? "" : service.prefix
-        }${controller.prefix}${op.path}`;
+        console.log("Operation", op);
+        const path = `${["", "/"].includes(service.prefix) ? "" : service.prefix}${controller.prefix}${op.path}`;
 
         if (!operationsByPath[path]) {
           operationsByPath[path] = [];
@@ -186,14 +180,12 @@ export async function generate(
     for (const op of operations) {
       if (!TypeGuard.TObject(op.params)) {
         throw new Error(
-          `Invalid parameters provided to route, must be Type.Object. ${op.name} ${op.method} ${op.path}`
+          `Invalid parameters provided to route, must be Type.Object. ${op.name} ${op.method} ${op.path}`,
         );
       }
 
       if (!TypeGuard.TObject(op.query)) {
-        throw new Error(
-          `Invalid query provided to route, must be Type.Object. ${op.name} ${op.method} ${op.path}`
-        );
+        throw new Error(`Invalid query provided to route, must be Type.Object. ${op.name} ${op.method} ${op.path}`);
       }
 
       pathObj = {
@@ -201,7 +193,7 @@ export async function generate(
         [op.method]: {
           operationId: kebab(op.name),
           summary: op.summary ?? "No Summary",
-          description: op.description ?? "No description",
+          description: !!op.description ? op.description : "No description",
           tags: op.tags.map(titleCase),
           ...(["post", "put"].includes(op.method)
             ? {

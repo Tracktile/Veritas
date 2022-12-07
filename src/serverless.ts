@@ -3,21 +3,17 @@ import { Handler } from "aws-lambda";
 import Cors from "@koa/cors";
 import Koa, { Context, Next, DefaultState } from "koa";
 
-import serverlessExpress, {
-  getCurrentInvoke,
-} from "@vendia/serverless-express";
-import { Service, ServiceContext } from "../src";
+import serverlessExpress, { getCurrentInvoke } from "@vendia/serverless-express";
+import { Service } from "./service";
 
 interface ConfigureParams {
   app: RequestListener;
   resolutionMode: string;
 }
 
-export const serverless = <T extends ServiceContext>(
-  service: Service<T>
-): Handler => {
-  const constructWrappedKoaApp = (app: Service<T>): Koa<DefaultState, T> => {
-    const wrapperApp = new Koa<DefaultState, T>({});
+export const serverless = <TExtend = Record<string, never>>(service: Service<TExtend>): Handler => {
+  const constructWrappedKoaApp = (app: Service<TExtend>): Koa<DefaultState, TExtend> => {
+    const wrapperApp = new Koa<DefaultState, TExtend>({});
     wrapperApp.proxy = true;
 
     wrapperApp.use(async (ctx: Context, next: Next) => {

@@ -95,7 +95,7 @@ exports.handler = serverless(MyService);
 ```sh
 yarn veritas --in=./myService.ts --out=./my-api-schema.yaml --yaml
 OR
-yarn veritas --in=./myCombinedServices.ts --out=./my-api-schema.json --json 
+yarn veritas --in=./myCombinedServices.ts --out=./my-api-schema.json --json
 ```
 
 ## Examples
