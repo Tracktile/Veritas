@@ -1,4 +1,4 @@
-export { Type, Static } from "@sinclair/typebox";
+export { Type, Static, TSchema } from "@sinclair/typebox";
 export { Controller } from "./controller";
 export * from "./service";
 export * from "./combined-service";

@@ -2,7 +2,6 @@ import { v4 as uuid } from "uuid";
 import { TypeCompiler, ValueError } from "@sinclair/typebox/compiler";
 import { TypeGuard } from "@sinclair/typebox/guard";
 import { Type, TSchema } from "@sinclair/typebox";
-import { Value } from "@sinclair/typebox/value";
 import Router from "@koa/router";
 import { DefaultState, Middleware, Next } from "koa";
 
@@ -139,11 +138,9 @@ export class Controller<TExtend = Record<string, unknown>> {
       let errors: ValueError[] = [];
       if (context.query) {
         errors = [...errors, ...TypeCompiler.Compile(context.query).Errors(ctx.query)];
-        ctx.query = Value.Cast(this.noAdditionalProperties(context.query), ctx.query) as typeof ctx.query;
       }
       if (context.params) {
         errors = [...errors, ...TypeCompiler.Compile(context.params).Errors(ctx.params)];
-        ctx.params = Value.Cast(this.noAdditionalProperties(context.params), ctx.params) as typeof ctx.params;
       }
       if (context.req) {
         errors = [...errors, ...TypeCompiler.Compile(context.req).Errors(ctx.request.body)];
